@@ -14,7 +14,7 @@ class SalesAggregator:
     def initialize_from_database(self, db):
         # Get total sales from database
         from sqlalchemy import func
-        from .models import SalesTransaction
+        from app.models.models import SalesTransaction
         
         total_sales = db.query(func.sum(SalesTransaction.converted_amount_usd)).scalar() or 0
         

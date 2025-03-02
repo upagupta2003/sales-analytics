@@ -4,10 +4,11 @@ from sqlalchemy import func
 from typing import List
 from datetime import datetime, timedelta
 import asyncio
-from . import models, schemas, database
+from . import schemas, database
 from .database import engine, get_db, SessionLocal
 from .realtime import sales_aggregator
 from contextlib import asynccontextmanager
+from app.models import models
 # Currency conversion rates
 CONVERSION_RATES = {
     'USD': 1.0,
