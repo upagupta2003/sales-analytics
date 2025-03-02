@@ -92,7 +92,7 @@ async def create_sale(sale: schemas.SalesTransactionCreate, db: Session = Depend
     
     return db_sale
 
-@app.get("/api/analytics/real-time")
+@app.get("/api/analytics/realTime/total_revenue")
 def get_real_time_analytics():
     return sales_aggregator.get_sales_metrics()
 
