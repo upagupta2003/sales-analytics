@@ -49,7 +49,7 @@ function App() {
     }
   };
 
-  const fetchSalesData = async (page = 0, pageSize = 100) => {
+  const fetchSalesData = async () => {
     if (!startDate || !endDate) return;
 
     const formattedStartDate = startDate.format('YYYY-MM-DD');
@@ -64,7 +64,7 @@ function App() {
       // Fetch both sales data and total revenue in parallel
       const [salesResponse, totalRevenueResponse] = await Promise.all([
         axios.get(
-          `http://localhost:8000/api/sales/?skip=${page * pageSize}&limit=${pageSize}&start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
+          `http://localhost:8000/api/sales/?start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
           {
             headers: {
               'Accept': 'application/json',
@@ -191,8 +191,8 @@ function App() {
   };
 
   useEffect(() => {
-    fetchSalesData(0, 100);
-    const interval = setInterval(() => fetchSalesData(0, 100), 30000);
+    fetchSalesData();
+    const interval = setInterval(fetchSalesData, 30000);
     return () => clearInterval(interval);
   }, [startDate, endDate]);
 
@@ -239,11 +239,7 @@ function App() {
               <TopSalesPeople salesPeople={salesData.topSalesPeople} />
             </Grid>
             <Grid item xs={12}>
-              <RealtimeSales 
-                sales={salesData.realtimeSales} 
-                totalCount={salesData.totalCount}
-                onPageChange={(page, pageSize) => fetchSalesData(page, pageSize)}
-              />
+              <RealtimeSales sales={salesData.realtimeSales} />
             </Grid>
           </Grid>
         </Box>

@@ -3,8 +3,7 @@ import { Paper, Typography, Box, TextField, Stack } from '@mui/material';
 import { format } from 'date-fns';
 import { DataGrid } from '@mui/x-data-grid';
 
-export const RealtimeSales = ({ sales, totalCount, onPageChange }) => {
-  console.log('RealtimeSales props:', { sales, totalCount });
+export const RealtimeSales = ({ sales }) => {
   const [customerFilter, setCustomerFilter] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [paginationModel, setPaginationModel] = useState({
@@ -112,14 +111,15 @@ export const RealtimeSales = ({ sales, totalCount, onPageChange }) => {
       <DataGrid
         rows={filteredSales}
         columns={columns}
-        rowCount={totalCount}
-        paginationModel={paginationModel}
-        onPaginationModelChange={(newModel) => {
-          setPaginationModel(newModel);
-          onPageChange(newModel.page, newModel.pageSize);
+
+        pageSizeOptions={[25, 50, 100]}
+        initialState={{
+          pagination: {
+            paginationModel: {
+              pageSize: 100,
+            },
+          },
         }}
-        pageSizeOptions={[10, 25, 50, 100]}
-        paginationMode="server"
         disableRowSelectionOnClick
         autoHeight
         getRowId={(row) => row.id}
