@@ -1,12 +1,13 @@
 import React from 'react';
 import { Paper, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+import PublicIcon from '@mui/icons-material/Public';
 
-export const TopSalesPeople = ({ salesPeople }) => {
-  if (!salesPeople || salesPeople.length === 0) {
+export const TopRegions = ({ regions }) => {
+  if (!regions || regions.length === 0) {
     return null;
   }
 
+  // Format currency for labels
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -19,19 +20,19 @@ export const TopSalesPeople = ({ salesPeople }) => {
   return (
     <Paper sx={{ p: 3, height: '100%' }}>
       <Typography variant="h6" gutterBottom>
-        Top Sales Representatives
+        Top Performing Regions
       </Typography>
       <List>
-        {salesPeople.map((person, index) => (
-          <ListItem key={person.name}>
+        {regions.map((region) => (
+          <ListItem key={region.region}>
             <ListItemAvatar>
               <Avatar>
-                <PersonIcon />
+                <PublicIcon />
               </Avatar>
             </ListItemAvatar>
             <ListItemText
-              primary={person.name}
-              secondary={formatCurrency(person.revenue)}
+              primary={region.region}
+              secondary={formatCurrency(region.total_sales_usd)}
             />
           </ListItem>
         ))}

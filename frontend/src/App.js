@@ -12,6 +12,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { SalesOverview } from './components/SalesOverview';
 import { RevenueChart } from './components/RevenueChart';
 import { TopSalesPeople } from './components/TopSalesPeople';
+import { TopRegions } from './components/TopRegions';
 import { RealtimeSales } from './components/RealtimeSales';
 
 const theme = createTheme({
@@ -61,8 +62,8 @@ function App() {
       
       console.log('Fetching data with params:', { formattedStartDate, formattedEndDate });
       
-      // Fetch sales data, total revenue, and top sales reps in parallel
-      const [salesResponse, totalRevenueResponse, topSalesResponse] = await Promise.all([
+      // Fetch sales data, total revenue, top sales reps, and top regions in parallel
+      const [salesResponse, totalRevenueResponse, topSalesResponse, topRegionsResponse] = await Promise.all([
         axios.get(
           `http://localhost:8000/api/sales/?start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
           {
@@ -82,7 +83,16 @@ function App() {
           }
         ),
         axios.get(
-          'http://localhost:8000/api/analytics/realTime/top_sales_reps',
+          'http://localhost:8000/api/analytics/realTime/top_sales_reps?limit=3',
+          {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          }
+        ),
+        axios.get(
+          'http://localhost:8000/api/analytics/realTime/top_regions?limit=3',
           {
             headers: {
               'Accept': 'application/json',
@@ -118,8 +128,7 @@ function App() {
       // Calculate metrics from sales data
       // Use period revenue for charts and stats, but all-time revenue for the overview
       const periodRevenue = sales.reduce((sum, sale) => sum + sale.converted_amount_usd, 0);
-      const totalOrders = sales.length;
-      const averageOrderValue = totalOrders > 0 ? periodRevenue / totalOrders : 0;
+      const averageOrderValue = periodRevenue / (sales.length || 1);
 
       // Get top sales reps from the API response
       const topSalesPeople = (topSalesResponse.data || []).map(rep => ({
@@ -151,10 +160,14 @@ function App() {
           };
         }).filter(Boolean);
 
+      // Get top regions from the API response
+      const topRegions = (topRegionsResponse.data || []);
+      console.log('Top regions:', topRegions);
+
       const newData = {
         totalRevenue: allTimeRevenue,
-        totalOrders,
         averageOrderValue,
+        topRegions: topRegionsResponse.data || [],
         revenueByDay: sales
           .sort((a, b) => dayjs(a.date).diff(dayjs(b.date)))
           .map(sale => ({
@@ -172,7 +185,8 @@ function App() {
           salesRep: sale.sales_rep,
           region: sale.region || 'Unknown'
         })),
-        totalCount: total_count
+        totalCount: total_count,
+        topRegions: topRegions
       };
 
       console.log('Setting new data:', newData);
@@ -240,6 +254,7 @@ function App() {
             <Grid item xs={12} md={4}>
               <TopSalesPeople salesPeople={salesData.topSalesPeople} />
             </Grid>
+
             <Grid item xs={12}>
               <RealtimeSales sales={salesData.realtimeSales} />
             </Grid>

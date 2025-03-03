@@ -1,7 +1,7 @@
 import React from 'react';
 import { Paper, Grid, Typography, Box } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PublicIcon from '@mui/icons-material/Public';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 export const SalesOverview = ({ data }) => {
@@ -14,9 +14,10 @@ export const SalesOverview = ({ data }) => {
       icon: <AttachMoneyIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
     },
     {
-      title: 'Total Orders',
-      value: data.totalOrders.toLocaleString(),
-      icon: <ShoppingCartIcon sx={{ fontSize: 40, color: 'secondary.main' }} />,
+      title: 'Top Region',
+      value: data.topRegions?.[0]?.region || 'N/A',
+      subtitle: data.topRegions?.[0] ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.topRegions[0].total_sales_usd) : '',
+      icon: <PublicIcon sx={{ fontSize: 40, color: 'secondary.main' }} />,
     },
     {
       title: 'Average Order Value',
