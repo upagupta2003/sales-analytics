@@ -18,8 +18,20 @@ class SalesAggregator:
         
         total_sales = db.query(func.sum(SalesTransaction.converted_amount_usd)).scalar() or 0
         
+        # Get sales by rep
+        sales_by_rep = db.query(
+            SalesTransaction.sales_rep,
+            func.sum(SalesTransaction.converted_amount_usd).label('total_sales')
+        ).group_by(SalesTransaction.sales_rep).all()
+        
         # Set in Redis
         redis.set("sales:total_usd", total_sales)
+        
+        # Store sales by rep in Redis
+        for rep, amount in sales_by_rep:
+            if rep and amount:
+                redis.zadd("sales:by_rep", {rep: float(amount)})
+        
         return total_sales
 
     async def connect(self, websocket: WebSocket):
@@ -37,6 +49,10 @@ class SalesAggregator:
     def update_sales_counters(transaction):
         # Increment total sales counter
         redis.incrbyfloat("sales:total_usd", transaction.converted_amount_usd)
+        
+        # Update sales rep counter in sorted set
+        if transaction.sales_rep:
+            redis.zincrby("sales:by_rep", transaction.converted_amount_usd, transaction.sales_rep)
 
     @staticmethod
     def get_sales_metrics():
@@ -45,5 +61,14 @@ class SalesAggregator:
         return {
             "total_sales_usd": total_sales
         }
+    
+    @staticmethod
+    def get_top_sales_reps(limit: int = 10):
+        # Get top sales reps from sorted set
+        top_reps = redis.zrevrange("sales:by_rep", 0, limit-1, withscores=True)
+        return [
+            {"sales_rep": rep, "total_sales_usd": amount}
+            for rep, amount in top_reps
+        ]
 
 sales_aggregator = SalesAggregator()

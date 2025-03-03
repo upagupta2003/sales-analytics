@@ -61,8 +61,8 @@ function App() {
       
       console.log('Fetching data with params:', { formattedStartDate, formattedEndDate });
       
-      // Fetch both sales data and total revenue in parallel
-      const [salesResponse, totalRevenueResponse] = await Promise.all([
+      // Fetch sales data, total revenue, and top sales reps in parallel
+      const [salesResponse, totalRevenueResponse, topSalesResponse] = await Promise.all([
         axios.get(
           `http://localhost:8000/api/sales/?start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
           {
@@ -74,6 +74,15 @@ function App() {
         ),
         axios.get(
           'http://localhost:8000/api/analytics/realTime/total_revenue',
+          {
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          }
+        ),
+        axios.get(
+          'http://localhost:8000/api/analytics/realTime/top_sales_reps',
           {
             headers: {
               'Accept': 'application/json',
@@ -112,19 +121,12 @@ function App() {
       const totalOrders = sales.length;
       const averageOrderValue = totalOrders > 0 ? periodRevenue / totalOrders : 0;
 
-      // Group sales by sales rep for top performers
-      const salesByRep = sales.reduce((acc, sale) => {
-        if (!acc[sale.sales_rep]) {
-          acc[sale.sales_rep] = 0;
-        }
-        acc[sale.sales_rep] += sale.converted_amount_usd;
-        return acc;
-      }, {});
-
-      const topSalesPeople = Object.entries(salesByRep)
-        .map(([name, revenue]) => ({ name, revenue }))
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 5);
+      // Get top sales reps from the API response
+      const topSalesPeople = (topSalesResponse.data || []).map(rep => ({
+        name: rep.sales_rep,
+        revenue: rep.total_sales_usd
+      }));
+      console.log('Top sales people:', topSalesPeople);
 
       // Format sales for real-time display
       const realtimeSales = sales

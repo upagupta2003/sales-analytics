@@ -96,6 +96,10 @@ async def create_sale(sale: schemas.SalesTransactionCreate, db: Session = Depend
 def get_real_time_analytics():
     return sales_aggregator.get_sales_metrics()
 
+@app.get("/api/analytics/realTime/top_sales_reps")
+def get_top_sales_reps(limit: int = 10):
+    return sales_aggregator.get_top_sales_reps(limit=limit)
+
 @app.websocket("/ws/sales")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
