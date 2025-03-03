@@ -3,8 +3,9 @@ from datetime import datetime, timedelta
 import random
 import asyncio
 from sqlalchemy.orm import Session
-from . import models
+from app.models import models
 from app.service.currency import currency_service
+from . import SessionLocal
 
 fake = Faker()
 

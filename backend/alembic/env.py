@@ -20,7 +20,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import your models
-from app.models import Base
+from app.models.models import Base
 target_metadata = Base.metadata
 
 # Override sqlalchemy.url with environment variable
