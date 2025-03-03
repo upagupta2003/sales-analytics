@@ -4,4 +4,4 @@ backend/poetry.toml
 /frontend/node_modules/.bin
 /frontend/node_modules/.cache
 /frontend/node_modules
-backend/.env
+*/.env
