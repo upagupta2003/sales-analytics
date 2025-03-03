@@ -14,6 +14,7 @@ import { RevenueChart } from './components/RevenueChart';
 import { TopSalesPeople } from './components/TopSalesPeople';
 import { TopRegions } from './components/TopRegions';
 import { RealtimeSales } from './components/RealtimeSales';
+import { API_CONFIG } from './config/constants';
 
 const theme = createTheme({
   palette: {
@@ -65,7 +66,7 @@ function App() {
       // Fetch sales data, total revenue, top sales reps, and top regions in parallel
       const [salesResponse, totalRevenueResponse, topSalesResponse, topRegionsResponse] = await Promise.all([
         axios.get(
-          `http://localhost:8000/api/sales/?start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES}/?start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
           {
             headers: {
               'Accept': 'application/json',
@@ -74,7 +75,7 @@ function App() {
           }
         ),
         axios.get(
-          'http://localhost:8000/api/analytics/realTime/total_revenue',
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOTAL_REVENUE}`,
           {
             headers: {
               'Accept': 'application/json',
@@ -83,7 +84,7 @@ function App() {
           }
         ),
         axios.get(
-          'http://localhost:8000/api/analytics/realTime/top_sales_reps?limit=3',
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_SALES_REPS}?limit=3`,
           {
             headers: {
               'Accept': 'application/json',
@@ -92,7 +93,7 @@ function App() {
           }
         ),
         axios.get(
-          'http://localhost:8000/api/analytics/realTime/top_regions?limit=3',
+          `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_REGIONS}?limit=3`,
           {
             headers: {
               'Accept': 'application/json',
