@@ -37,7 +37,8 @@ function App() {
     averageOrderValue: 0,
     revenueByDay: [],
     topSalesPeople: [],
-    realtimeSales: []
+    realtimeSales: [],
+    totalCount: 0
   });
 
   const handleDateChange = (date, isStart) => {
@@ -48,7 +49,7 @@ function App() {
     }
   };
 
-  const fetchSalesData = async () => {
+  const fetchSalesData = async (page = 0, pageSize = 100) => {
     if (!startDate || !endDate) return;
 
     const formattedStartDate = startDate.format('YYYY-MM-DD');
@@ -63,7 +64,7 @@ function App() {
       // Fetch both sales data and total revenue in parallel
       const [salesResponse, totalRevenueResponse] = await Promise.all([
         axios.get(
-          `http://localhost:8000/api/sales/?skip=0&limit=100&start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
+          `http://localhost:8000/api/sales/?skip=${page * pageSize}&limit=${pageSize}&start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
           {
             headers: {
               'Accept': 'application/json',
@@ -89,15 +90,19 @@ function App() {
         throw new Error('No sales data received from the server');
       }
 
+      console.log('Raw sales response:', salesResponse);
       let sales = salesResponse.data;
+      let total_count = salesResponse.headers['x-total-count'] || 0;
+      console.log('Extracted sales:', sales);
       const allTimeRevenue = totalRevenueResponse.data?.total_sales_usd || 0;
-      console.log('Received total revenue:', allTimeRevenue);
-      console.log('Total revenue response:', totalRevenueResponse);
-      
-      // Ensure sales is an array
       if (!Array.isArray(sales)) {
         sales = [sales].filter(Boolean);
       }
+      console.log('Processed sales array:', sales);
+      console.log('Received total revenue:', allTimeRevenue);
+      console.log('Total revenue response:', totalRevenueResponse);
+      
+
       
       console.log('Processed sales data:', sales);
       
@@ -145,7 +150,7 @@ function App() {
         }).filter(Boolean);
 
       const newData = {
-        totalRevenue: allTimeRevenue, // Use all-time revenue from the new endpoint
+        totalRevenue: allTimeRevenue,
         totalOrders,
         averageOrderValue,
         revenueByDay: sales
@@ -155,7 +160,17 @@ function App() {
             revenue: sale.converted_amount_usd
           })),
         topSalesPeople,
-        realtimeSales
+        realtimeSales: sales.map(sale => ({
+          id: sale.id,
+          date: sale.date,
+          customerName: sale.customer_name,
+          amount: sale.amount,
+          currency: sale.currency,
+          convertedAmount: sale.converted_amount_usd,
+          salesRep: sale.sales_rep,
+          region: sale.region || 'Unknown'
+        })),
+        totalCount: total_count
       };
 
       console.log('Setting new data:', newData);
@@ -176,8 +191,8 @@ function App() {
   };
 
   useEffect(() => {
-    fetchSalesData();
-    const interval = setInterval(fetchSalesData, 30000);
+    fetchSalesData(0, 100);
+    const interval = setInterval(() => fetchSalesData(0, 100), 30000);
     return () => clearInterval(interval);
   }, [startDate, endDate]);
 
@@ -224,7 +239,11 @@ function App() {
               <TopSalesPeople salesPeople={salesData.topSalesPeople} />
             </Grid>
             <Grid item xs={12}>
-              <RealtimeSales sales={salesData.realtimeSales} />
+              <RealtimeSales 
+                sales={salesData.realtimeSales} 
+                totalCount={salesData.totalCount}
+                onPageChange={(page, pageSize) => fetchSalesData(page, pageSize)}
+              />
             </Grid>
           </Grid>
         </Box>

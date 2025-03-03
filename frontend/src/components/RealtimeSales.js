@@ -3,16 +3,23 @@ import { Paper, Typography, Box, TextField, Stack } from '@mui/material';
 import { format } from 'date-fns';
 import { DataGrid } from '@mui/x-data-grid';
 
-export const RealtimeSales = ({ sales }) => {
+export const RealtimeSales = ({ sales, totalCount, onPageChange }) => {
+  console.log('RealtimeSales props:', { sales, totalCount });
   const [customerFilter, setCustomerFilter] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
+  const [paginationModel, setPaginationModel] = useState({
+    pageSize: 5,
+    page: 0,
+  });
 
   const filteredSales = useMemo(() => {
+    console.log('Filtering sales:', sales);
     return sales.filter(sale => {
       const matchesCustomer = sale.customerName.toLowerCase().includes(customerFilter.toLowerCase());
       const matchesRegion = sale.region.toLowerCase().includes(regionFilter.toLowerCase());
       return matchesCustomer && matchesRegion;
     });
+    console.log('Filtered sales result:', filteredSales);
   }, [sales, customerFilter, regionFilter]);
   const columns = [
     {
@@ -105,10 +112,19 @@ export const RealtimeSales = ({ sales }) => {
       <DataGrid
         rows={filteredSales}
         columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        disableSelectionOnClick
+        rowCount={totalCount}
+        paginationModel={paginationModel}
+        onPaginationModelChange={(newModel) => {
+          setPaginationModel(newModel);
+          onPageChange(newModel.page, newModel.pageSize);
+        }}
+        pageSizeOptions={[10, 25, 50, 100]}
+        paginationMode="server"
+        disableRowSelectionOnClick
         autoHeight
+        getRowId={(row) => row.id}
+        loading={!sales.length}
+
       />
     </Paper>
   );
