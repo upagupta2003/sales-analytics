@@ -6,19 +6,11 @@ from typing import List
 from datetime import datetime, timedelta
 import asyncio
 import db
+from app.service.currency import currency_service
 from db import engine, get_db, SessionLocal
 from app.service.realtime import sales_aggregator
 from contextlib import asynccontextmanager
 from app.models import models, schemas
-# Currency conversion rates
-CONVERSION_RATES = {
-    'USD': 1.0,
-    'EUR': 1.1,
-    'GBP': 1.27,
-    'JPY': 0.0067,
-    'AUD': 0.65
-}
-
 models.Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
@@ -66,8 +58,8 @@ def get_sales(
 
 @app.post("/api/sales/", response_model=schemas.SalesTransaction)
 async def create_sale(sale: schemas.SalesTransactionCreate, db: Session = Depends(get_db)):
-    # Convert amount to USD using conversion rates
-    converted_amount = sale.amount * CONVERSION_RATES[sale.currency]
+    # Convert amount to USD using real-time exchange rate
+    converted_amount = await currency_service.convert_to_usd(sale.amount, sale.currency)
     
     db_sale = models.SalesTransaction(
         **sale.model_dump(),

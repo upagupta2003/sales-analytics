@@ -119,10 +119,10 @@ pip install Faker
 2. Run the following Python code:
 ```python
 from db.database import SessionLocal
-from db.sample_data import generate_sample_data
+from db.sample_data import generate_sample_data_sync
 
 db = SessionLocal()
-generate_sample_data(db, num_records=100)
+generate_sample_data_sync(db, num_records=100)
 ```
 
 This will create 100 random sales transactions with:
