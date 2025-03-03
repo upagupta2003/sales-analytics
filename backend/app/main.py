@@ -100,6 +100,10 @@ def get_real_time_analytics():
 def get_top_sales_reps(limit: int = 10):
     return sales_aggregator.get_top_sales_reps(limit=limit)
 
+@app.get("/api/analytics/realTime/top_regions")
+def get_top_regions(limit: int = 10):
+    return sales_aggregator.get_top_regions(limit=limit)
+
 @app.websocket("/ws/sales")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()

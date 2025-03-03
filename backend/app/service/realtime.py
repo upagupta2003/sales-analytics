@@ -24,6 +24,12 @@ class SalesAggregator:
             func.sum(SalesTransaction.converted_amount_usd).label('total_sales')
         ).group_by(SalesTransaction.sales_rep).all()
         
+        # Get sales by region
+        sales_by_region = db.query(
+            SalesTransaction.region,
+            func.sum(SalesTransaction.converted_amount_usd).label('total_sales')
+        ).group_by(SalesTransaction.region).all()
+        
         # Set in Redis
         redis.set("sales:total_usd", total_sales)
         
@@ -31,6 +37,11 @@ class SalesAggregator:
         for rep, amount in sales_by_rep:
             if rep and amount:
                 redis.zadd("sales:by_rep", {rep: float(amount)})
+        
+        # Store sales by region in Redis
+        for region, amount in sales_by_region:
+            if region and amount:
+                redis.zadd("sales:by_region", {region: float(amount)})
         
         return total_sales
 
@@ -53,6 +64,10 @@ class SalesAggregator:
         # Update sales rep counter in sorted set
         if transaction.sales_rep:
             redis.zincrby("sales:by_rep", transaction.converted_amount_usd, transaction.sales_rep)
+            
+        # Update region counter in sorted set
+        if transaction.region:
+            redis.zincrby("sales:by_region", transaction.converted_amount_usd, transaction.region)
 
     @staticmethod
     def get_sales_metrics():
@@ -69,6 +84,15 @@ class SalesAggregator:
         return [
             {"sales_rep": rep, "total_sales_usd": amount}
             for rep, amount in top_reps
+        ]
+    
+    @staticmethod
+    def get_top_regions(limit: int = 10):
+        # Get top regions from sorted set
+        top_regions = redis.zrevrange("sales:by_region", 0, limit-1, withscores=True)
+        return [
+            {"region": region, "total_sales_usd": amount}
+            for region, amount in top_regions
         ]
 
 sales_aggregator = SalesAggregator()
