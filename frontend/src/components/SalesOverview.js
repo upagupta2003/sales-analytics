@@ -18,14 +18,20 @@ export const SalesOverview = () => {
   const fetchOverviewData = async () => {
     try {
       setLoading(true);
-      const [totalRevenueResponse, topSalesResponse, topRegionsResponse] = await Promise.all([
+      const [totalRevenueResponse, topSalesResponse, topRegionsResponse, salesResponse] = await Promise.all([
         axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOTAL_REVENUE}`),
         axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_SALES_REPS}`),
-        axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_REGIONS}`)
+        axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TOP_REGIONS}`),
+        axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES}`)
       ]);
 
+      const totalRevenue = totalRevenueResponse.data?.total_sales_usd || 0;
+      const totalTransactions = salesResponse.data?.length || 0;
+      const averageOrderValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0;
+
       setData({
-        totalRevenue: totalRevenueResponse.data?.total_sales_usd || 0,
+        totalRevenue,
+        averageOrderValue,
         topRegions: topRegionsResponse.data || [],
         topSalesPeople: (topSalesResponse.data || []).map(rep => ({
           name: rep.sales_rep,
@@ -87,6 +93,7 @@ export const SalesOverview = () => {
     {
       title: 'Average Order Value',
       value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.averageOrderValue),
+      subtitle: 'Average value per transaction',
       icon: <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main' }} />,
     },
   ];
