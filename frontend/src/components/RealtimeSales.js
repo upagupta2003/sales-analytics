@@ -1,9 +1,67 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Paper, Typography, Box, TextField, Stack } from '@mui/material';
+import axios from 'axios';
+import { API_CONFIG } from '../config/constants';
 import { format } from 'date-fns';
 import { DataGrid } from '@mui/x-data-grid';
 
-export const RealtimeSales = ({ sales }) => {
+export const RealtimeSales = () => {
+  const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const fetchSales = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SALES}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      // Transform the data to match the expected format
+      const salesData = response.data.map(sale => ({
+        id: sale.id,
+        date: sale.date,
+        customerName: sale.customer_name,
+        amount: sale.amount,
+        currency: sale.currency,
+        convertedAmount: sale.converted_amount_usd,
+        salesRep: sale.sales_rep,
+        region: sale.region || 'Unknown'
+      }));
+
+      setSales(salesData);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch sales data');
+      console.error('Error fetching sales:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchSales();
+
+    // Set up interval for periodic updates
+    const interval = setInterval(fetchSales, 30000);
+
+    // Listen for refresh events
+    const handleRefresh = () => fetchSales();
+    window.addEventListener('refreshSales', handleRefresh);
+
+    // Cleanup interval and event listener on unmount
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refreshSales', handleRefresh);
+    };
+  }, []);
   const [customerFilter, setCustomerFilter] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [paginationModel, setPaginationModel] = useState({
@@ -18,7 +76,6 @@ export const RealtimeSales = ({ sales }) => {
       const matchesRegion = sale.region.toLowerCase().includes(regionFilter.toLowerCase());
       return matchesCustomer && matchesRegion;
     });
-    console.log('Filtered sales result:', filteredSales);
   }, [sales, customerFilter, regionFilter]);
   const columns = [
     {
@@ -123,7 +180,7 @@ export const RealtimeSales = ({ sales }) => {
         disableRowSelectionOnClick
         autoHeight
         getRowId={(row) => row.id}
-        loading={!sales.length}
+        loading={loading}
 
       />
     </Paper>
