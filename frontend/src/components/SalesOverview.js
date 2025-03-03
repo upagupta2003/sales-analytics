@@ -20,7 +20,7 @@ export const SalesOverview = ({ data }) => {
     },
     {
       title: 'Average Order Value',
-      value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.totalOrders ? data.totalRevenue / data.totalOrders : 0),
+      value: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.averageOrderValue),
       icon: <TrendingUpIcon sx={{ fontSize: 40, color: 'success.main' }} />,
     },
   ];

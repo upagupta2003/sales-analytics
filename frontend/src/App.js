@@ -90,7 +90,9 @@ function App() {
       }
 
       let sales = salesResponse.data;
-      const allTimeRevenue = totalRevenueResponse.data?.total_revenue || 0;
+      const allTimeRevenue = totalRevenueResponse.data?.total_sales_usd || 0;
+      console.log('Received total revenue:', allTimeRevenue);
+      console.log('Total revenue response:', totalRevenueResponse);
       
       // Ensure sales is an array
       if (!Array.isArray(sales)) {
