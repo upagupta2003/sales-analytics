@@ -11,7 +11,22 @@ class SalesAggregator:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
         
+    def _clear_redis_data(self):
+        """Clear all sales-related data from Redis"""
+        # Delete all keys related to sales
+        keys_to_delete = [
+            "sales:total_usd",
+            "sales:by_rep",
+            "sales:by_region"
+        ]
+        for key in keys_to_delete:
+            redis.delete(key)
+        print("Redis data cleared")
+
     def initialize_from_database(self, db):
+        # Clear existing Redis data
+        self._clear_redis_data()
+        
         # Get total sales from database
         from sqlalchemy import func
         from app.models.models import SalesTransaction
@@ -43,6 +58,7 @@ class SalesAggregator:
             if region and amount:
                 redis.zadd("sales:by_region", {region: float(amount)})
         
+        print(f"Redis data reloaded: {total_sales} total sales, {len(sales_by_rep)} sales reps, {len(sales_by_region)} regions")
         return total_sales
 
     async def connect(self, websocket: WebSocket):
