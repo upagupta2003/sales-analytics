@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import axios from 'axios';
 import { format, subDays } from 'date-fns';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
@@ -24,6 +27,8 @@ const theme = createTheme({
 });
 
 function App() {
+  const [startDate, setStartDate] = useState(sub(new Date(), { days: 30 }));
+  const [endDate, setEndDate] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [salesData, setSalesData] = useState({
@@ -36,7 +41,24 @@ function App() {
   });
 
   useEffect(() => {
+    fetchSalesData();
+    const interval = setInterval(fetchSalesData, 30000);
+    return () => clearInterval(interval);
+  }, [startDate, endDate]);
+
+  const handleDateChange = (date, isStart) => {
+    if (isStart) {
+      setStartDate(date);
+    } else {
+      setEndDate(date);
+    }
+  };
+
+  useEffect(() => {
     const fetchSalesData = async () => {
+    if (!startDate || !endDate) return;
+    
+    try {
       try {
         console.log('Starting data fetch...');
         setLoading(true);
@@ -50,7 +72,7 @@ function App() {
         // Fetch both sales data and total revenue in parallel
         const [salesResponse, totalRevenueResponse] = await Promise.all([
           axios.get(
-            `http://localhost:8000/api/sales/?skip=0&limit=100&start_date=${startDate}&end_date=${endDate}&region=North%20America`,
+            `http://localhost:8000/api/sales/?skip=0&limit=100&start_date=${formattedStartDate}&end_date=${formattedEndDate}`,
             {
               headers: {
                 'Accept': 'application/json',
@@ -110,12 +132,24 @@ function App() {
         const realtimeSales = sales
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 10)
-          .map(sale => ({
+          .map(sale => {
+            // Ensure all required fields exist
+            if (!sale || typeof sale !== 'object') {
+              console.error('Invalid sale object:', sale);
+              return null;
+            }
+
+            return {
             id: sale.id,
+            date: sale.date,
             customerName: sale.customer_name,
-            amount: sale.converted_amount_usd,
-            timestamp: sale.date
-          }));
+            amount: sale.amount,
+            currency: sale.currency,
+            convertedAmount: sale.converted_amount_usd,
+            salesRep: sale.sales_rep,
+            region: sale.region || 'Unknown'
+          };
+          }).filter(Boolean);
 
         const newData = {
           totalRevenue: allTimeRevenue, // Use all-time revenue from the new endpoint
